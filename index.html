@@ -7,21 +7,47 @@
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
     canvas { display:block; }
+
+    /* ===== overlay to guarantee music starts ===== */
+    #startOverlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ff9bd6;
+      font-size: 28px;
+      font-family: sans-serif;
+      cursor: pointer;
+      z-index: 999;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 
+<!-- Click overlay (added) -->
+<div id="startOverlay">Click anywhere 💕</div>
+
 <script>
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
-/* ====== MUSIC (ADDED ONLY) ====== */
-const bgMusic = new Audio("music.mp3"); // file nhạc đặt cùng folder với fireworks.html
+/* ====== MUSIC ====== */
+const bgMusic = new Audio("music.mp3");
 bgMusic.loop = true;
-bgMusic.volume = 0.45; // chỉnh âm lượng: 0.0 -> 1.0
+bgMusic.volume = 0.45;
 let musicStarted = false;
-/* =============================== */
+
+const overlay = document.getElementById("startOverlay");
+overlay.addEventListener("click", () => {
+  bgMusic.play().catch(() => {});
+  musicStarted = true;
+  overlay.style.display = "none";
+});
+/* =================== */
 
 function resize() {
   canvas.width  = innerWidth * devicePixelRatio;
@@ -53,13 +79,8 @@ addEventListener("mousedown", (e) => onClickShoot(e.clientX));
 addEventListener("touchstart", (e) => onClickShoot(e.touches[0].clientX), { passive:true });
 
 function onClickShoot(x){
-
-  /* ====== MUSIC START ON FIRST CLICK (ADDED ONLY) ====== */
-  if (!musicStarted) {
-    bgMusic.play().catch(() => {}); // tránh lỗi console nếu browser chặn tạm
-    musicStarted = true;
-  }
-  /* ==================================================== */
+  // If music hasn't been started via overlay yet, ignore clicks (prevents autoplay blocks)
+  if (!musicStarted) return;
 
   totalClicks++;
   const inCycle = ((totalClicks - 1) % CYCLE) + 1; // 1..20
